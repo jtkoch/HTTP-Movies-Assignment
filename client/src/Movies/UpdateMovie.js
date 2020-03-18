@@ -4,49 +4,49 @@ import axios from 'axios';
 const UpdateMovie = props => {
   console.log(props);
   const [item, setItem] = useState({
-    id: "",
-    title: "",
-    director: "",
-    metascore: "",
-    stars: []
+    id: '',
+    title: '',
+    director: '',
+    metascore: '',
+    stars: [],
   });
 
   useEffect(() => {
     console.log(props.match.params.id)
+    axios.get(`http://localhost:5000/api/movies/${props.match.params.id}`)
+    .then(res => {
+      setItem(res.data)
+    })
+  }, [props.match.params.id])
+  const changeHandler = e => {
+    e.persist();
+    let value = e.target.value;
+    if (e.target.name === 'stars') {
+      value = [value]
+    }
+
+    setItem({
+      ...item,
+      [e.target.name]: value,
+      id: props.match.params.id
+    });
+  };
+
+  const handleSubmit =  e => {
+    e.preventDefault();
+    console.log(item)
     axios
-      .get(`http://localhost:5000/api/movies/${props.match.params.id}`)
+      .put(`http://localhost:5000/api/movies/${item.id}`, item)
       .then(res => {
-        setItem(res.data)
+        console.log(props)
+        props.history.push(`/movies/${item.id}`);
       })
-    }, [props.match.params.id])
-    const changeHandler = e => {
-      e.persist();
-      let value = e.target.value;
-      if (e.target.name === 'stars') {
-        value = [value]
-      }
+      .catch(err => console.log(err));
+  };
 
-      setItem({
-        ...item,
-        [e.target.name]: value,
-        id: props.match.params.id
-      });
-    };
-    
-    const handleSubmit = e => {
-      e.preventDefault();
-      console.log(item)
-      axios
-        .put(`http://localhost:5000/api/movies/${item.id}`, item)
-        .then(res => {
-          console.log(props)
-          props.history.push(`/movies/${item.id}`);
-        })
-        .catch(err => console.log(err));
-    };
-
-  return (  
+  return (
     <div>
+      <h2>Update Item</h2>
       <form onSubmit={handleSubmit}>
         <input
           type="text"
@@ -67,27 +67,28 @@ const UpdateMovie = props => {
         <div className="baseline" />
 
         <input
-          type="text"
+          type="string"
           name="metascore"
           onChange={changeHandler}
-          placeHolder="metascore"
+          placeholder="metascore"
           value={item.metascore}
         />
         <div className="baseline" />
 
-        <input 
+        <input
           type="string"
           name="stars"
           onChange={changeHandler}
           placeholder="stars"
           value={item.stars}
         />
+
         <div className="baseline" />
 
-        <button className="md-button form-button">Update</button>  
+        <button className="md-button form-button">Update</button>
       </form>
     </div>
   );
 };
 
-export default UpdateMovie;
+export default UpdateMovie; 

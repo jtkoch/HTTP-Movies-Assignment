@@ -1,59 +1,60 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useRouteMatch } from 'react-router-dom';
-import MovieCard from './MovieCard';
-
-function Movie({ addToSavedList, props }) {
-  const [movie, setMovie] = useState(null);
-  const match = useRouteMatch();
-
-  const deleteMovie = e => {
-    e.preventDefault();
-
-    axios
-      .delete(`http://localhost:5000/api/movies/${props.match.params.id}`)
-      .then(res => {
-      console.log(res)
-      props.history.push("/")
+import React from "react";
+import axios from "axios";
+import MovieCard from "./MovieCard";
+import { Link } from 'react-router-dom'
+export default class Movie extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      movie: null
+    };
+  }
+  componentDidMount() {
+    this.fetchMovie(this.props.match.params.id);
+  }
+  componentWillReceiveProps(newProps) {
+    if (this.props.match.params.id !== newProps.match.params.id) {
+      this.fetchMovie(newProps.match.params.id);
+    }
+  }
+  deleteMovie = () => {
+    axios.delete(`http://localhost:5000/api/movies/${this.props.match.params.id}`)
+    .then(res => {
+      this.setState({movie: null});
+      console.log(this.props);
+       console.log(res); this.props.history.push("/")
+       this.props.setSavedList(this.props.savedList.filter(savedMovie => savedMovie.id !== parseInt(this.props.match.params.id )))
     })
-    .catch(err => {
-      console.log(err);
-    });  
-  };
+  }
 
-  const fetchMovie = id => {
+  fetchMovie = id => {
     axios
       .get(`http://localhost:5000/api/movies/${id}`)
-      .then(res => setMovie(res.data))
+      .then(res => this.setState({ movie: res.data }, console.log(res)))
       .catch(err => console.log(err.response));
   };
 
-  const saveMovie = () => {
-    addToSavedList(movie);
+  saveMovie = () => {
+    const addToSavedList = this.props.addToSavedList;
+    addToSavedList(this.state.movie);
   };
+  render() {
+    if (!this.state.movie) {
+      return <div>Loading movie information...</div>;
+    }
+    return (
+      <div className="save-wrapper">
+        <MovieCard movie={this.state.movie} />
+        <div className="save-button" onClick={this.saveMovie}>
+          Save
 
-  useEffect(() => {
-    fetchMovie(match.params.id);
-  }, [match.params.id]);
+        </div>
+        <button>
+          <Link to={`/update-movie/${this.state.movie.id}`}>Edit</Link>
+        </button>
+        <button onClick={this.deleteMovie}>Delete Movie</button>
 
-  if (!movie) {
-    return <div>Loading movie information...</div>;
+      </div>
+    );
   }
-
-  return (
-    <div className='save-wrapper'>
-      <MovieCard movie={movie} />
-
-      <div className='save-button' onClick={saveMovie}>
-        Save
-      </div>
-
-      <div>
-        <button onClick={() => props.history.push(`/update-movie/${movie.id}`)} ></button>
-        <button onClick={deleteMovie}>Delete Movie</button>
-      </div>
-    </div>
-  );
 }
-
-export default Movie;
